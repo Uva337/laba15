@@ -16,12 +16,12 @@ from typing import List
 import xml.etree.ElementTree as ET
 
 
-class IllegalYearError(Exception):
+class IllegalTimeError(Exception):
 
-    def __init__(self, year, message="Запрещенная дата :"):
-        self.year = year
+    def __init__(self, time, message="Запрещенное время :"):
+        self.time = time
         self.message = message
-        super(IllegalYearError, self).__init__(message)
+        super(IllegalTimeError, self).__init__(message)
 
     def __str__(self):
         return f"{self.year} -> {self.message}"
@@ -39,62 +39,58 @@ class UnknownCommandError(Exception):
 
 
 @dataclass(frozen=True)
-class Peop:
-    surname: str
+class poez:
     name: str
-    number: int
-    year: int
+    num: str
+    time: str
 
 
 @dataclass
 class Staff:
-    people: List[Peop] = field(default_factory=lambda: [])
+    poezd: List[poez] = field(default_factory=lambda: [])
 
-    def add(self, surname, name, number, year) -> None:
+    def add(self, name, num, time): -> None:
 
-        if "." not in number:
-            raise IllegalYearError(year)
+        if "." not in num:
+            raise IllegalTimeError(time)
 
-        self.people.append(
-            Peop(
-                surname=surname,
+        self.poezd.append(
+            poez(
                 name=name,
-                number=number,
-                year=year
+                num=num,
+                time=time
             )
         )
 
-        self.people.sort(key=lambda people: peop.number)
+
+        self.poezd.sort(key=lambda poez: poez.num)
 
     def __str__(self):
         table = []
-        line = '+-{}-+-{}-+-{}-+-{}-+-{}-+'.format(
+        l line = '+-{}-+-{}-+-{}-+-{}-+'.format(
             '-' * 4,
+            '-' * 30,
             '-' * 20,
-            '-' * 20,
-            '-' * 20,
-            '-' * 15
+            '-' * 17
         )
         table.append(line)
         table.append(
-            '| {:^4} | {:^20} | {:^20} | {:^20} | {:^15} |'.format(
+            '| {:^4} | {:^30} | {:^20} | {:^17} |'.format(
                 "№",
-                "Фамилия ",
-                "Имя",
-                "Номер телефона",
-                "Дата рождения"
+                "Пункт назначения",
+                "Номер поезда",
+                "Время отправления"
             )
         )
         table.append(line)
 
-        for idx, Peop in enumerate(self.peop, 1):
+        for idx, poez in enumerate(self.poezd, 1):
             table.append(
-                '| {:>4} | {:<20} | {:<20} | {:<20} | {:>15} |'.format(
+                '| {:>4} | {:<30} | {:<20} | {:>17} |'.format(
                     idx,
-                    peop.surname,
-                    peop.name,
-                    peop.number,
-                    peop.year
+                    poez.name,
+                    poez.num,
+                    poez.time
                 )
             )
 
@@ -102,14 +98,14 @@ class Staff:
 
         return '\n'.join(table)
 
-    def select(self, surname) -> List[Peop]:
+    def select(self, name) -> List[Poez]:
         parts = command.split(' ', maxsplit=2)
-        sur = (parts[1])
+        nam = (parts[1])
         result = []
 
-        for peop in self.people:
-            if people.surname == surname:
-                result.append(peop)
+        for poez in self.poezd:
+            if poezd.name == name:
+                result.append(poez)
 
         return result
 
@@ -118,111 +114,102 @@ class Staff:
             xml = fin.read()
         parser = ET.XMLParser(encoding="utf8")
         tree = ET.fromstring(xml, parser=parser)
-        self.people = []
+        self.poezd = []
 
-        for peop_element in tree:
-            surname, name, number, year = None, None, None, None
+        for poez_element in tree:
+            name, num, time = None, None, None
 
-            for element in peop_element:
-                if element.tag == 'surname':
-                    surname = element.text
-                elif element.tag == 'name':
+            for element in poez_element:
+                if element.tag == 'name':
                     name = element.text
-                elif element.tag == 'number':
-                    number = element.text
-                elif element.tag == 'year':
-                    year = element.text
+                elif element.tag == 'num':
+                    num = element.text
+                elif element.tag == 'time':
+                    time = element.text
 
-                if surname is not None and name is not None \
-                        and number is not None and year is not None:
-                    self.people.append(
-                        Peop(
-                            surname=surname,
+                if name is not None and num is not None \
+                        and time is not None and time is not None:
+                    self.poezd.append(
+                        poez(
                             name=name,
-                            number=int(number),
-                            year=int(year)
+                            num=int(num),
+                            time=time
                         )
                     )
 
+
     def save(self, filename):
-        root = ET.Element('people')
-        for peop in self.people:
-            peop_element = ET.Element('people')
+        root = ET.Element('poezd')
+        for poez in self.poezd:
+            poez_element = ET.Element('poez')
 
-            surname_element = ET.SubElement(peop_element, 'surname')
-            surname_element.text = peop.surname
+            name_element = ET.SubElement(poez_element, 'name')
+            name_element.text = poez.name
 
-            name_element = ET.SubElement(peop_element, 'name')
-            name_element.text = peop.name
+            num_element = ET.SubElement(poez_element, 'num')
+            num_element.text = poez.num
 
-            number_element = ET.SubElement(peop_element, 'number')
-            number_element.text = str(peop.number)
+            time_element = ET.SubElement(poez_element, 'time')
+            time_element.text = str(poez.time)
 
-            year_element = ET.SubElement(peop_element, 'year')
-            year_element.text = str(peop.year)
+            root.append(poez_element)
 
-            root.append(peop_element)
-
-        tree = ET.ElementTree(root)
-        with open(filename, 'wb') as fout:
-            tree.write(fout, encoding='utf8', xml_declaration=True)
+    tree = ET.ElementTree(root)
+    with open(filename, 'wb') as fout:
+        tree.write(fout, encoding='utf8', xml_declaration=True)
 
 
 if __name__ == '__main__':
 
     logging.basicConfig(
-        filename='people.log',
+        filename='poezd.log',
         level=logging.INFO,
         format='%(asctime)s %(levelname)s:%(message)s'
     )
-
     staff = Staff()
+
     while True:
-        try:
+
             command = input(">>> ").lower()
             if command == 'exit':
                 break
 
 
             elif command == 'add':
-                surname = input("Фамилия ")
-                name = input("Имя ")
-                number = int(input("Номер телефона "))
-                year = input("Дата рождения в формате:")
+                name = input("Название пункта назначения: ")
+                num = input("Номер поезда: ")
+                time = input("Время отправления: ")
 
-                staff.add(surname, name, number, year)
-                logging.info(
-                    f"Добавлена фамилия: {surname}, "
-                    f"Добавлено имя {name}, "
-                    f"Добавлен номер телефона {number}, "
-                    f"Добавлена дата рождения {year}. "
+                staff.add(name, num, time)
+                logging.info(f"Добавлено название: {name}, "
+                f"Добавлен номер: {num}, "
+                f"Добавлено время {time}. "
                 )
 
 
             elif command == 'list':
                 print(staff)
-                logging.info("Отображен список людей.")
+                logging.info("Отображен список поездов.")
 
             elif command.startswith('select '):
                 parts = command.split(' ', maxsplit=2)
                 selected = staff.select(parts[1])
 
                 if selected:
-                    for c, peop in enumerate(selected, 1):
+                    for c, poez in enumerate(selected, 1):
                         print(
-                            ('Фамилия:', peop.surname),
-                            ('Имя:', peop.name),
-                            ('Номер телефона:', peop.number),
-                            ('Дата рождения:', peop.year)
-                        )
-                    logging.info(
-                        f"Найден человек с фамилией {Peop.surname}"
+                            ('Название:', poez.name),
+                            ('Номер :', poez.num,)),
+                            ('Время:', poez.time)
                     )
+                    logging.info(
+                    f"Найден путь с названием {poez.name}"
+                )
 
                 else:
-                    print("Таких фамилий нет!")
+                    print("Таких названий нет!")
                     logging.warning(
-                        f"Человек с фамилией {Peop.surname} не найден."
+                        f"Путь с названием {poez.name} не найден."
                     )
 
             elif command.startswith('load '):
@@ -238,9 +225,9 @@ if __name__ == '__main__':
             elif command == 'help':
 
                 print("Список команд:\n")
-                print("add - добавить человека;")
-                print("list - вывести список людей;")
-                print("select <фамилия> - запросить информацию по фамилии;")
+                print("add - добавить поезд;")
+                print("list - вывести список поездов;")
+                print("select <номер поезда> - запросить информацию о выбранном времени;")
                 print("help - отобразить справку;")
                 print("load <имя файла> - загрузить данные из файла;")
                 print("save <имя файла> - сохранить данные в файл;")
@@ -251,3 +238,4 @@ if __name__ == '__main__':
         except Exception as exc:
             logging.error(f"Ошибка: {exc}")
             print(exc, file=sys.stderr)
+            
